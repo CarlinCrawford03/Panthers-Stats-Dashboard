@@ -3,15 +3,12 @@ import pandas as pd
 from supabase import create_client, Client
 import plotly.express as px
 import os
-from dotenv import load_dotenv
 
 # -------------------------------
-# --- Load environment variables ---
+# --- Load Supabase secrets from environment ---
 # -------------------------------
-load_dotenv()
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_URL = os.environ["SUPABASE_URL"]
+SUPABASE_KEY = os.environ["SUPABASE_KEY"]
 
 # -------------------------------
 # --- Setup Supabase client ---
@@ -41,14 +38,18 @@ if df.empty:
 # Sidebar: Filter by player
 players = df["Player"].dropna().unique().tolist()
 selected_players = st.sidebar.multiselect("Filter by player", players, default=players)
-
 filtered_df = df[df["Player"].isin(selected_players)]
 
 # Identify numeric columns
-numeric_columns = [col for col in filtered_df.columns if col not in ["Player", "updated_at"] and pd.api.types.is_numeric_dtype(filtered_df[col])]
+numeric_columns = [
+    col for col in filtered_df.columns
+    if col not in ["Player", "updated_at"] and pd.api.types.is_numeric_dtype(filtered_df[col])
+]
 
 # Tabs for views
-tab1, tab2, tab3, tab4 = st.tabs(["📋 Table View", "🥧 Pie Chart", "🏆 Leaderboard", "🔍 Player Comparison"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    "📋 Table View", "🥧 Pie Chart", "🏆 Leaderboard", "🔍 Player Comparison"
+])
 
 # 📋 Table View
 with tab1:
@@ -67,10 +68,13 @@ with tab2:
 
 # 🏆 Leaderboard
 with tab3:
-    st.subheader("Top 5 Players")
-    leaderboard_column = st.selectbox("Choose stat for leaderboard", numeric_columns)
-    top_df = filtered_df.sort_values(by=leaderboard_column, ascending=False).head(5)
-    st.table(top_df[["Player", leaderboard_column]])
+    if numeric_columns:
+        st.subheader("Top 5 Players")
+        leaderboard_column = st.selectbox("Choose stat for leaderboard", numeric_columns)
+        top_df = filtered_df.sort_values(by=leaderboard_column, ascending=False).head(5)
+        st.table(top_df[["Player", leaderboard_column]])
+    else:
+        st.info("No numeric columns available for leaderboard.")
 
 # 🔍 Player Comparison
 with tab4:
